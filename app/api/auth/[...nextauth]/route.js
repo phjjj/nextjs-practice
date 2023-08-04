@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+
 import User from "@models/user";
 import { connectToDB } from "@utils/database";
 
@@ -15,25 +16,22 @@ const handler = NextAuth({
   ],
   callbacks: {
     async session({ session }) {
-      const sessionUser = await User.findOne({
-        email: session.user.email,
-      });
-
+      // store the user id from MongoDB to session
+      const sessionUser = await User.findOne({ email: session.user.email });
       session.user.id = sessionUser._id.toString();
+
       return session;
     },
+
     async signIn({ profile }) {
       try {
         await connectToDB();
 
-        // 같은 이메일 존재하는지 검사
-        const userExists = await User.findOne({
-          email: profile.email,
-        });
+        const userExists = await User.findOne({ email: profile.email });
 
         if (!userExists) {
           await User.create({
-            eamil: profile.email,
+            email: profile.email,
             username: profile.name.replace(" ", "").toLowerCase(),
             image: profile.picture,
           });
